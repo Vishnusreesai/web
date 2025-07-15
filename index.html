@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>API Quiz</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: linear-gradient(135deg, #89f7fe, #66a6ff);
+      margin: 0;
+      padding: 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      color: #333;
+    }
+
+    .container {
+      background: white;
+      border-radius: 15px;
+      padding: 30px;
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+      max-width: 600px;
+      width: 95%;
+      text-align: center;
+    }
+
+    h1 {
+      color: #004085;
+      margin-bottom: 20px;
+    }
+
+    .question {
+      font-size: 18px;
+      margin-bottom: 20px;
+    }
+
+    .option {
+      background: #e3f2fd;
+      padding: 12px;
+      margin: 10px 0;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: 0.3s ease;
+    }
+
+    .option:hover {
+      background: #bbdefb;
+    }
+
+    .option.selected {
+      background: #64b5f6;
+      color: white;
+    }
+
+    button {
+      margin-top: 20px;
+      padding: 10px 15px;
+      font-size: 16px;
+      border: none;
+      border-radius: 8px;
+      background-color: #007bff;
+      color: white;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background-color: #0056b3;
+    }
+
+    #result {
+      font-size: 20px;
+      margin-top: 20px;
+      color: green;
+    }
+
+    #timer {
+      font-weight: bold;
+      margin-bottom: 15px;
+      color: #dc3545;
+    }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <h1>REST API Quiz</h1>
+  <div id="timer">Time left: 300s</div>
+  <div id="quizBox">
+    <div class="question" id="questionText"></div>
+    <div id="optionsList"></div>
+    <button onclick="nextQuestion()">Next</button>
+  </div>
+  <div id="result" style="display:none;"></div>
+</div>
+
+<script>
+  const quiz = [
+    { q: "What does API stand for?", options: ["Application Programming Interface", "Automated Program Interaction", "Advanced Protocol Integration", "Applied Programming Input"], answer: 0 },
+    { q: "What does REST stand for?", options: ["Remote Entry Service Transfer", "Representational State Transfer", "Reliable Exchange Service Transport", "Regional State Transport"], answer: 1 },
+    { q: "Which is a common format used in REST APIs?", options: ["CSV", "HTML", "JSON", "DOC"], answer: 2 },
+    { q: "Which HTTP method is used to retrieve data?", options: ["POST", "GET", "DELETE", "PUT"], answer: 1 },
+    { q: "What does CRUD stand for?", options: ["Create, Read, Update, Delete", "Copy, Restore, Undo, Drop", "Create, Run, Undo, Deploy", "Connect, Reboot, Update, Delete"], answer: 0 },
+    { q: "Which status code means 'Not Found'?", options: ["200", "404", "500", "403"], answer: 1 },
+    { q: "Which tool is commonly used to test REST APIs?", options: ["Git", "Postman", "Excel", "NPM"], answer: 1 },
+    { q: "What is WSDL used for?", options: ["Securing APIs", "Describing the structure of JSON", "Describing SOAP web services", "Encrypting data"], answer: 2 },
+    { q: "Which protocol is commonly used for REST APIs?", options: ["FTP", "SMTP", "HTTP", "TCP"], answer: 2 },
+    { q: "Which HTTP method is used to create a resource?", options: ["GET", "POST", "DELETE", "PUT"], answer: 1 },
+    { q: "Which header specifies data type in a request?", options: ["Accept-Encoding", "Content-Type", "Authorization", "Data-Type"], answer: 1 },
+    { q: "Which protocol is used by SOAP Web Services?", options: ["HTTP", "SMTP", "FTP", "All of the above"], answer: 3 },
+    { q: "Which HTTP method is idempotent?", options: ["POST", "GET", "PUT", "Both B and C"], answer: 3 },
+    { q: "What does SOAP stand for?", options: ["Simple Object Access Protocol", "Secure Open Access Protocol", "Software Object Access Point", "Server Open Application Protocol"], answer: 0 },
+    { q: "What is the purpose of an API key?", options: ["Log errors", "Authenticate users", "Store data", "Encrypt data"], answer: 1 },
+    { q: "What status code means 'Created'?", options: ["200", "201", "204", "500"], answer: 1 },
+    { q: "Which method is used to delete a resource?", options: ["POST", "DELETE", "PUT", "REMOVE"], answer: 1 },
+    { q: "Which is not an HTTP method?", options: ["TRACE", "CONNECT", "SEND", "PATCH"], answer: 2 },
+    { q: "What status code means 'OK'?", options: ["200", "202", "204", "401"], answer: 0 },
+    { q: "What is the format of a REST API endpoint?", options: ["JSON", "XML", "URL", "CSV"], answer: 2 }
+  ];
+
+  let current = 0;
+  let score = 0;
+  let selected = null;
+  let timeLeft = 300;
+  const questionText = document.getElementById("questionText");
+  const optionsList = document.getElementById("optionsList");
+  const resultBox = document.getElementById("result");
+  const timerBox = document.getElementById("timer");
+
+  function startTimer() {
+    const timer = setInterval(() => {
+      timeLeft--;
+      timerBox.textContent = `Time left: ${timeLeft}s`;
+      if (timeLeft <= 0) {
+        clearInterval(timer);
+        finishQuiz();
+      }
+    }, 1000);
+  }
+
+  function loadQuestion() {
+    const q = quiz[current];
+    questionText.textContent = `${current + 1}. ${q.q}`;
+    optionsList.innerHTML = "";
+
+    q.options.forEach((opt, i) => {
+      const div = document.createElement("div");
+      div.className = "option";
+      div.textContent = opt;
+      div.onclick = () => {
+        selected = i;
+        document.querySelectorAll(".option").forEach(el => el.classList.remove("selected"));
+        div.classList.add("selected");
+      };
+      optionsList.appendChild(div);
+    });
+  }
+
+  function nextQuestion() {
+    if (selected === quiz[current].answer) score++;
+    selected = null;
+
+    current++;
+    if (current < quiz.length) {
+      loadQuestion();
+    } else {
+      finishQuiz();
+    }
+  }
+
+  function finishQuiz() {
+    document.getElementById("quizBox").style.display = "none";
+    resultBox.style.display = "block";
+    resultBox.innerHTML = `✅ You scored <strong>${score}</strong> out of ${quiz.length}`;
+  }
+
+  // Start on load
+  window.onload = () => {
+    loadQuestion();
+    startTimer();
+  };
+</script>
+
+</body>
+</html>
